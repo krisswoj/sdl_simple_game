@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <string>
 #include <windows.h>
+#include <SDL_ttf.h>
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 int gameStatus;
+int numberOfBulletsShot = 0;
+int numberOfBulletsDodged = 0;
 
 class lTexture
 {
@@ -17,9 +20,7 @@ public:
 
 	bool loadFromFile(std::string path);
 
-#ifdef _SDL_TTF_H
 	bool loadFromRenderedText(std::string textureText, SDL_Color textColor);
-#endif
 
 	void free();
 
@@ -73,7 +74,7 @@ public:
 	Bomb();
 	int mPosX, mPosY;
 
-	void handleEvent(SDL_Event& e);
+	void handleEvent(SDL_Event& e, int& number);
 	void move(Soldier & soldier);
 	void render() const;
 	int direction;
@@ -121,7 +122,7 @@ public:
 	bool available = true;
 	bool activated = false;
 
-	void move(EnemyGun& EnemyGun, Soldier& soldier, int direction, int& gameStatus);
+	void move(EnemyGun& EnemyGun, Soldier& soldier, int direction, int& gameStatus, int& numberOfShots);
 	void render() const;
 
 	SDL_Rect mCollider{};
@@ -142,6 +143,10 @@ lTexture gLoseTexture;
 lTexture gBombTexture;
 lTexture gEnemyIcon;
 lTexture gStoneGifTexture;
+
+TTF_Font *gFont = NULL;
+lTexture gTextTexture;
+lTexture gText2Texture;
 
 lTexture::lTexture()
 {
@@ -188,15 +193,18 @@ bool lTexture::loadFromFile(std::string path)
 	return mTexture != NULL;
 }
 
-#ifdef _SDL_TTF_H
-bool LTexture::loadFromRenderedText(string textureText, SDL_Color textColor)
+bool lTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor)
 {
 	//Get rid of preexisting texture
 	free();
 
 	//Render text surface
 	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
-	if (textSurface != NULL)
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else
 	{
 		//Create texture from surface pixels
 		mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
@@ -214,16 +222,10 @@ bool LTexture::loadFromRenderedText(string textureText, SDL_Color textColor)
 		//Get rid of old surface
 		SDL_FreeSurface(textSurface);
 	}
-	else
-	{
-		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
-	}
-
 
 	//Return success
 	return mTexture != NULL;
 }
-#endif
 
 void lTexture::free()
 {
@@ -345,7 +347,7 @@ void Soldier::handleEvent(SDL_Event& e)
 	}
 }
 
-void Bomb::handleEvent(SDL_Event& e)
+void Bomb::handleEvent(SDL_Event& e, int& number)
 {
 	if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 	{
@@ -356,6 +358,7 @@ void Bomb::handleEvent(SDL_Event& e)
 				mVelY = 2;
 				activated = true;
 				direction = 1;
+				number += 1;
 			}
 			break;
 		case SDLK_a:
@@ -363,6 +366,7 @@ void Bomb::handleEvent(SDL_Event& e)
 				mVelX = 2;
 				activated = true;
 				direction = 3;
+				number += 1;
 			}
 			break;
 		case SDLK_s:
@@ -370,6 +374,7 @@ void Bomb::handleEvent(SDL_Event& e)
 				mVelY = 2;
 				activated = true;
 				direction = 4;
+				number += 1;
 			}
 			break;
 		case SDLK_d:
@@ -377,11 +382,13 @@ void Bomb::handleEvent(SDL_Event& e)
 				mVelX = 2;
 				activated = true;
 				direction = 2;
+				number += 1;
 			}
 			break;
 		default:
 			break;
 		}
+
 	}
 }
 
@@ -549,7 +556,7 @@ void EnemyGun::move(Bomb& bomb, int& gameStatus)
 	}
 }
 
-void Cartidge::move(EnemyGun& enemyGun, Soldier& soldier, int direction, int& gameStatus)
+void Cartidge::move(EnemyGun& enemyGun, Soldier& soldier, int direction, int& gameStatus, int& numberOfShots)
 {
 	if (!available)
 	{
@@ -557,6 +564,7 @@ void Cartidge::move(EnemyGun& enemyGun, Soldier& soldier, int direction, int& ga
 			mPosX = enemyGun.mPosX;
 			mPosY = enemyGun.mPosY;
 			activated = !activated;
+			numberOfShots += 1;
 		}
 
 		acceleration += 1;
@@ -677,6 +685,12 @@ bool init()
 		}
 	}
 
+	if (TTF_Init() == -1)
+	{
+		printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
+
 	return success;
 }
 
@@ -719,12 +733,29 @@ bool loadMedia()
 		printf("Failed to load enemyIcon texture!\n");
 		success = false;
 	}
-	
-	
+
+
 	if (!gStoneGifTexture.loadFromFile("stone_gif.gif"))
 	{
 		printf("Failed to load stone texture!\n");
 		success = false;
+	}
+
+	gFont = TTF_OpenFont("lazy.ttf", 28);
+	if (gFont == NULL)
+	{
+		printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
+	else
+	{
+		//Render text
+		SDL_Color textColor = { 0, 0, 0 };
+		if (!gTextTexture.loadFromRenderedText("The quick brown fox jumps over the lazy dog", textColor))
+		{
+			printf("Failed to render text texture!\n");
+			success = false;
+		}
 	}
 
 	return success;
@@ -733,7 +764,7 @@ bool loadMedia()
 void close()
 {
 	gSoldierIcon.free();
-	
+
 	SDL_DestroyRenderer(gRenderer);
 	SDL_DestroyWindow(gWindow);
 	gWindow = NULL;
@@ -830,7 +861,7 @@ int main(int argc, char* args[])
 						}
 
 						soldier.handleEvent(e);
-						bomb.handleEvent(e);
+						bomb.handleEvent(e, numberOfBulletsShot);
 					}
 
 					soldier.move();
@@ -873,16 +904,16 @@ int main(int argc, char* args[])
 
 					for (int i = 0; i < cartidgeNumber; i++) {
 						if (enemyGun1.alive) {
-							cartidge[0][i].move(enemyGun1, soldier, 2, gameStatus);
+							cartidge[0][i].move(enemyGun1, soldier, 2, gameStatus, numberOfBulletsDodged);
 						}
 						if (enemyGun2.alive) {
-							cartidge[1][i].move(enemyGun2, soldier, 1, gameStatus);
+							cartidge[1][i].move(enemyGun2, soldier, 1, gameStatus, numberOfBulletsDodged);
 						}
 						if (enemyGun3.alive) {
-							cartidge[2][i].move(enemyGun3, soldier, 4, gameStatus);
+							cartidge[2][i].move(enemyGun3, soldier, 4, gameStatus, numberOfBulletsDodged);
 						}
 						if (enemyGun4.alive) {
-							cartidge[3][i].move(enemyGun4, soldier, 3, gameStatus);
+							cartidge[3][i].move(enemyGun4, soldier, 3, gameStatus, numberOfBulletsDodged);
 						}
 					}
 
@@ -927,7 +958,24 @@ int main(int argc, char* args[])
 				if (gameStatus == 2) {
 					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 					SDL_RenderClear(gRenderer);
+
 					gLoseTexture.render(0, 0);
+
+					SDL_Color textColor = { 100, 25, 100 };
+					if (!gTextTexture.loadFromRenderedText("Times you shot: " + std::to_string(abs(numberOfBulletsShot)), textColor))
+					{
+						printf("Failed to render text texture!\n");
+					}
+					gTextTexture.render(200, 300, NULL, NULL, NULL);
+
+
+					if (!gText2Texture.loadFromRenderedText("Times enemy shot: " + std::to_string(abs(numberOfBulletsDodged)), textColor))
+					{
+						printf("Failed to render text texture!\n");
+					}
+					gText2Texture.render(200, 350, NULL, NULL, NULL);
+
+					
 					SDL_RenderPresent(gRenderer);
 					Sleep(50000);
 					close();
@@ -936,7 +984,23 @@ int main(int argc, char* args[])
 				if (gameStatus == 3) {
 					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 					SDL_RenderClear(gRenderer);
+
 					gWonBackground.render(0, 0);
+
+					SDL_Color textColor = { 100, 25, 100 };
+					if (!gTextTexture.loadFromRenderedText("Times you shot: " + std::to_string(abs(numberOfBulletsShot)), textColor))
+					{
+						printf("Failed to render text texture!\n");
+					}
+					gTextTexture.render(200, 300, NULL, NULL, NULL);
+
+					if (!gText2Texture.loadFromRenderedText("Times enemy shot: " + std::to_string(abs(numberOfBulletsDodged)), textColor))
+					{
+						printf("Failed to render text texture!\n");
+					}
+					gText2Texture.render(200, 350, NULL, NULL, NULL);
+
+			
 					SDL_RenderPresent(gRenderer);
 					Sleep(50000);
 					close();

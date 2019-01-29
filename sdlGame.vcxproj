@@ -70,8 +70,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\vs_dev_lib\SDL2-2.0.9\include;C:\vs_dev_lib\SDL2_image-2.0.4\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\vs_dev_lib\SDL2-2.0.9\lib\x86;C:\vs_dev_lib\SDL2_image-2.0.4\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\vs_dev_lib\SDL2_ttf-2.0.15\include;C:\vs_dev_lib\SDL2-2.0.9\include;C:\vs_dev_lib\SDL2_image-2.0.4\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vs_dev_lib\SDL2_ttf-2.0.15\lib\x86;C:\vs_dev_lib\SDL2-2.0.9\lib\x86;C:\vs_dev_lib\SDL2_image-2.0.4\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -82,8 +82,8 @@
       <AdditionalIncludeDirectories>D:\vs_dev_lib\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>D:\vs_dev_lib\SDL2\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\vs_dev_lib\SDL2_ttf-2.0.15\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -129,11 +129,15 @@
   <ItemGroup>
     <None Include="D:\vs_dev_lib\SDL2\lib\x86\SDL2.dll" />
     <None Include="D:\vs_dev_lib\SDL2_image-2.0.4\lib\x86\SDL2_image.dll" />
+    <None Include="SDL2_ttf.dll" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="bg.png" />
     <Image Include="dot.bmp" />
     <Image Include="plane.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="lazy.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

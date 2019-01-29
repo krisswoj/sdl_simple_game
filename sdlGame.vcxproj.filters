@@ -26,6 +26,9 @@
     <None Include="D:\vs_dev_lib\SDL2_image-2.0.4\lib\x86\SDL2_image.dll">
       <Filter>Pliki źródłowe</Filter>
     </None>
+    <None Include="SDL2_ttf.dll">
+      <Filter>Pliki źródłowe</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="plane.png">
@@ -37,5 +40,10 @@
     <Image Include="dot.bmp">
       <Filter>Pliki źródłowe</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="lazy.ttf">
+      <Filter>Pliki źródłowe</Filter>
+    </Font>
   </ItemGroup>
 </Project>
